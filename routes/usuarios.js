@@ -3,9 +3,9 @@ const Joi = require('@hapi/joi');
 const ruta = express.Router();
 
 const usuarios = [
-    {id:1, nombre:'Grover'},
-    {id:2, nombre:'Pablo'},
-    {id:3, nombre:'Ana'}
+    {id:1, nombre:'facial', descripcion:'este producto es para la cara'},
+    {id:2, nombre:'desma', descripcion:'este producto es para la cara'},
+    {id:3, nombre:'masaje', descripcion:'este producto es para la cara'}
 ];
 
 ruta.get('/', (req, res) => {
