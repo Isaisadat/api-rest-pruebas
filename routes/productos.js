@@ -11,6 +11,7 @@ const esquemaProducto = Joi.object({
     precio: Joi.number().min(0).precision(2).required(),
     categoria: Joi.string().valid('facial', 'corporal', 'capilar', 'maquillaje', 'otros').required(),
     stock: Joi.number().integer().min(0).default(0),
+    imagenUrl: Joi.string().uri().optional().allow(''),
     activo: Joi.boolean().default(true)
 });
 
@@ -82,7 +83,9 @@ ruta.post('/', async (req, res) => {
         const nuevoProducto = {
             ...value,
             fechaCreacion: new Date(),
-            codigo: generarCodigoProducto()
+            codigo: generarCodigoProducto(),
+            // Si no se proporciona imagenUrl, usar una por defecto
+            imagenUrl: value.imagenUrl || 'https://via.placeholder.com/300x300?text=Producto+Sin+Imagen'
         };
 
         const resultado = await db.collection('productos').insertOne(nuevoProducto);
@@ -102,7 +105,53 @@ ruta.post('/', async (req, res) => {
         });
     }
 });
+// PUT actualizar imagen de producto
+ruta.put('/:id/imagen', async (req, res) => {
+    try {
+        if (!ObjectId.isValid(req.params.id)) {
+            return res.status(400).json({
+                status: 'error',
+                message: 'ID inválido'
+            });
+        }
 
+        const { error } = Joi.string().uri().validate(req.body.imagenUrl);
+        if (error) {
+            return res.status(400).json({
+                status: 'error',
+                message: 'URL de imagen inválida'
+            });
+        }
+
+        const db = getDB();
+        const resultado = await db.collection('productos').updateOne(
+            { _id: new ObjectId(req.params.id) },
+            { 
+                $set: { 
+                    imagenUrl: req.body.imagenUrl,
+                    fechaActualizacion: new Date()
+                } 
+            }
+        );
+
+        if (resultado.matchedCount === 0) {
+            return res.status(404).json({
+                status: 'error',
+                message: 'Producto no encontrado'
+            });
+        }
+
+        res.json({
+            status: 'success',
+            message: 'Imagen del producto actualizada correctamente'
+        });
+    } catch (error) {
+        res.status(500).json({
+            status: 'error',
+            message: 'Error al actualizar imagen: ' + error.message
+        });
+    }
+});
 // PUT actualizar producto
 ruta.put('/:id', async (req, res) => {
     try {
